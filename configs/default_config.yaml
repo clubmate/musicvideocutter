@@ -1,0 +1,42 @@
+# Music Video Cutter Configuration File
+
+# Output Settings
+output:
+  base_directory: "./outputs"
+  video_format: "mp4"
+  
+# Scene Detection Settings
+scene_detection:
+  method: "adaptive"  # Options: "adaptive", "content", "threshold"
+  threshold: 30.0     # Sensitivity for scene detection (0-100)
+  min_scene_length: 1.0  # Minimum scene length in seconds
+  
+# Scene Grouping Settings
+scene_grouping:
+  similarity_threshold: 0.7  # Threshold for scene similarity (0-1)
+  max_groups: 10            # Maximum number of groups to create
+  cross_video_grouping: false  # Group scenes across multiple videos
+  
+# Video Processing Settings
+video_processing:
+  transition_effect: "fade"  # Options: "fade", "hard_cut", "dissolve"
+  transition_duration: 0.5   # Duration of transition in seconds
+  output_quality: "high"     # Options: "low", "medium", "high"
+  
+# Download Settings
+download:
+  quality: "720p"           # Preferred video quality
+  audio_quality: "128k"     # Audio quality
+  format: "mp4"            # Output format
+  
+# Logging Settings
+logging:
+  level: "INFO"            # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+  log_file: "musicvideocutter.log"
+  verbose: false
+  
+# Advanced Settings
+advanced:
+  max_workers: 4           # Number of parallel workers
+  cache_scenes: true       # Cache scene detection results
+  cleanup_temp: true       # Clean up temporary files

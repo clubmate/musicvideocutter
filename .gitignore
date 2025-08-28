@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Music Video Cutter specific
+outputs/
+test_data/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+musicvideocutter.log
+sample_config.yaml
+.scene_cache/
