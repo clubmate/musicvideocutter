@@ -1,0 +1,17 @@
+# Core dependencies
+click>=8.0.0
+pyyaml>=6.0
+tqdm>=4.60.0
+numpy>=1.21.0
+
+# Video processing
+moviepy>=1.0.3
+opencv-python>=4.5.0
+scenedetect[opencv]>=0.6.0
+
+# YouTube downloading
+yt-dlp>=2023.1.6
+
+# Optional dependencies for enhanced functionality
+scikit-learn>=1.0.0  # For advanced scene similarity
+pillow>=8.0.0        # Image processing
