@@ -1,6 +1,6 @@
 # Music Video Cutter
 
-A powerful Python tool for cutting and merging music video segments based on scene detection and similarity analysis. Perfect for extracting and organizing music video sets that jump back and forth between different scenes.
+A powerful Python tool for cutting and merging video segments based on scene detection and similarity analysis. Perfect for extracting and organizing music video sets that jump back and forth between different scenes.
 
 ## Features
 
