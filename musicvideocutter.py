@@ -1,7 +1,6 @@
 import os
 import argparse
 import yaml
-from yt_dlp import YoutubeDL
 import scenedetect
 from scenedetect import detect, split_video_ffmpeg
 from scenedetect.detectors import (
@@ -11,27 +10,11 @@ from scenedetect.detectors import (
     HistogramDetector,
     HashDetector,
 )
+from src.downloader import download_video
 
 def load_config():
     with open('config.yaml', 'r') as f:
         return yaml.safe_load(f)
-
-def download_video(url):
-    ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': '%(title)s.%(ext)s',
-    }
-    with YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        if 'entries' in info:
-            videos = []
-            for entry in info['entries']:
-                filename = ydl.prepare_filename(entry)
-                videos.append((filename, entry['title']))
-        else:
-            filename = ydl.prepare_filename(info)
-            videos = [(filename, info['title'])]
-    return videos
 
 def _build_detector(cfg: dict, fps: float | None):
     """Return a detector instance based on config.
@@ -128,15 +111,38 @@ def main():
     input_path = args.input
 
     if input_path.startswith('http'):
-        videos = download_video(input_path)
+        download_dir = config['output']['download_dir']
+        videos = download_video(input_path, download_dir)
     else:
         videos = [(input_path, os.path.splitext(os.path.basename(input_path))[0])]
 
     for video_path, title in videos:
-        output_base = title.replace('/', '_').replace('\\', '_').replace(':', '_')
-        output_dir = output_base
-        temp_dir = os.path.join(output_dir, config['output']['temp_dir'])
-        merged_dir = os.path.join(output_dir, config['output']['merged_dir'])
+        # For downloaded videos, the video_path already includes the subdirectory
+        # For local files, create output structure based on file location
+        if input_path.startswith('http'):
+            # video_path is already in output/video_name/video.mp4
+            video_dir = os.path.dirname(video_path)
+            temp_dir = os.path.join(video_dir, config['output']['temp_dir'])
+            merged_dir = os.path.join(video_dir, config['output']['merged_dir'])
+        else:
+            # Check if local file is already in a structured directory (e.g., output/video_name/video.mp4)
+            video_dir = os.path.dirname(os.path.abspath(video_path))
+            video_filename = os.path.basename(video_path)
+            
+            # If the parent directory name matches the video filename (without extension), use that directory
+            parent_dir_name = os.path.basename(video_dir)
+            video_name_without_ext = os.path.splitext(video_filename)[0]
+            
+            if parent_dir_name == video_name_without_ext or video_dir != os.getcwd():
+                # File is already in a structured directory, use it
+                temp_dir = os.path.join(video_dir, config['output']['temp_dir'])
+                merged_dir = os.path.join(video_dir, config['output']['merged_dir'])
+            else:
+                # File is in current directory, create new structure
+                output_base = title.replace('/', '_').replace('\\', '_').replace(':', '_')
+                output_dir = output_base
+                temp_dir = os.path.join(output_dir, config['output']['temp_dir'])
+                merged_dir = os.path.join(output_dir, config['output']['merged_dir'])
 
         print(f"Processing {title}")
         scenes = detect_and_split(video_path, temp_dir, config)

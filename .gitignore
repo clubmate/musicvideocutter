@@ -217,3 +217,5 @@ test_data/
 musicvideocutter.log
 sample_config.yaml
 .scene_cache/
+
+output/
