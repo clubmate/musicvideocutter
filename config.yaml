@@ -45,17 +45,14 @@ scene_detection:
 
 
 grouping:
-  # Aktivierung erfolgt über CLI Flag --group
-  similarity_threshold: 0.10   # 0.45 # 0..1 kombinierte Distanz (Histogramm + Hash) (höher = strengere Gruppen)
-  hist_bins: 32                # Histogramm-Bins pro HSV-Kanal
-  hash_size: 16                # pHash Größe (16 => 256 Bits)
-  weight_hist: 0.5             # Gewicht Histogramm-Distanz
-  weight_hash: 0.5             # Gewicht Hash-Distanz
-  min_cluster_size: 2          # Mindestanzahl Segmente für Merge
-  show_progress: true          # Fortschrittsbalken anzeigen
-  log_details: true            # Feature-/Cluster-Statistiken loggen
-  skip_concat: false           # Nur Clustering (kein ffmpeg concat) für Debug
-  debug_dir: debug_grouping    # Optionaler Debug-Output (z.B. Feature-Dumps) – derzeit nicht genutzt
+  simple_frames: 1              # Anzahl Frames: 1= nur Mitte, 3=Start/Mitte/Ende, 5/7/... gleichmäßig verteilt
+  simple_threshold: 0.88        # 0.88 # >= similarity -> gleiche Gruppe (0..1)
+  simple_hash_weight: 0.30      # Anteil pHash Similarity
+  simple_resize: 64             # Seitenlänge für Durchschnittsbild
+  min_cluster_size: 2
+  show_progress: true
+  log_details: true
+  skip_concat: false
 
 
 transition:
