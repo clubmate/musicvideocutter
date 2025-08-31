@@ -1,6 +1,6 @@
 # Music Video Cutter
 
-A Python script that automatically cuts music videos at scene changes and groups similar segments together, then merges them into cohesive videos for each "set" or scene type.
+A Python tool that automatically detects scene cuts in music videos, extracts segments, groups visually similar ones (sets), and merges each group into its own compiled video. Grouping is enabled by default (disable with `--no-grouping`).
 
 ## Description
 
@@ -8,14 +8,14 @@ Music videos often feature multiple sets or locations that the artist jumps betw
 
 ## Features
 
-- **Multiple Input Sources**: Supports YouTube videos, playlists, or local video files
-- **High-Quality Downloads**: Downloads best available quality (up to 1080p) from YouTube
-- **Automatic Scene Detection**: Uses content-aware scene detection to identify cuts
-- **Intelligent Grouping**: Groups similar scenes using perceptual hashing
-- **Flexible Transitions**: Choose between hard cuts or fade transitions
-- **Progress Tracking**: Real-time progress bars for all operations
-- **Configurable**: YAML-based configuration for all parameters
-- **Batch Processing**: Handles YouTube playlists automatically
+- YouTube videos & playlists or local files
+- Multiple scene detection methods: adaptive | content | threshold | histogram | hash
+- Lossless segment extraction via FFmpeg stream copy
+- Robust set grouping (default enabled): 5 keyframes (0%,25%,50%,75%,100%), HSV histograms + perceptual hash combined distance
+- Progress bars (tqdm) for feature extraction, clustering & merging
+- Tunable weights & thresholds for grouping
+- Modular architecture (`downloader`, `scene_detection`, `grouping`)
+- Disable grouping with `--no-grouping`
 
 ## Installation
 
@@ -42,75 +42,113 @@ Music videos often feature multiple sets or locations that the artist jumps betw
 
 ## Usage
 
-### Basic Usage
-
+Default (with grouping):
 ```bash
 python musicvideocutter.py "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
-or for local files:
-
+Local file:
 ```bash
-python musicvideocutter.py "path/to/your/video.mp4"
+python musicvideocutter.py "my_video.mp4"
+```
+
+Disable grouping (only cut segments):
+```bash
+python musicvideocutter.py my_video.mp4 --no-grouping
 ```
 
 ### Examples
 
-Process a single YouTube video:
+YouTube video:
 ```bash
 python musicvideocutter.py "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
-Process a YouTube playlist:
+YouTube playlist:
 ```bash
 python musicvideocutter.py "https://www.youtube.com/playlist?list=PLAYLIST_ID"
 ```
 
-Process a local video file:
+Cut only, no grouping/merging:
 ```bash
-python musicvideocutter.py "my_music_video.mp4"
+python musicvideocutter.py my_music_video.mp4 --no-grouping
 ```
 
 ## Configuration
 
-All settings are controlled via `config.yaml`:
+`config.yaml` (current structure):
 
 ```yaml
 scene_detection:
-  threshold: 30  # Lower values detect more cuts (more sensitive)
-  min_scene_len: 15  # Minimum scene length in seconds
+  method: adaptive           # adaptive | content | threshold_params | histogram | hash
+  min_scene_len: 6           # Minimum scene length (frames) if seconds not used
+  # min_scene_len_seconds: 1 # Alternative in seconds
+  adaptive:
+    adaptive_threshold: 3.0
+    window_width: 2
+    min_content_val: 15.0
+  content:
+    threshold: 27.0
+    luma_only: false
+  threshold_params:
+    threshold: 12
+    fade_bias: 0.0
+    add_final_scene: false
+  histogram:
+    threshold: 0.05
+    bins: 256
+  hash:
+    threshold: 0.395
+    size: 16
+    lowpass: 2
 
 grouping:
-  similarity_threshold: 10  # Hamming distance threshold for grouping similar scenes
+  similarity_threshold: 0.45  # Combined distance (histogram + hash)
+  hist_bins: 32
+  hash_size: 16
+  weight_hist: 0.5
+  weight_hash: 0.5
+  min_cluster_size: 2
+  show_progress: true
+  log_details: true
+  skip_concat: false
+  debug_dir: debug_grouping
 
 transition:
-  type: hard_cut  # Options: hard_cut, fade_in_out
-  fade_duration: 1.0  # Duration of fade in seconds (only for fade_in_out)
+  type: hard_cut       # placeholder for future transitions
+  fade_duration: 1.0
 
 output:
-  temp_dir: temp_segments  # Directory for temporary segments
-  merged_dir: merged_videos  # Directory for merged videos
+  download_dir: output
+  temp_dir: temp_segments
+  merged_dir: merged_videos
 ```
 
-### Configuration Options
+### Key Options
 
-- **scene_detection.threshold**: Sensitivity for detecting scene changes (lower = more sensitive)
-- **scene_detection.min_scene_len**: Minimum length for a scene in seconds
-- **grouping.similarity_threshold**: How similar scenes must be to be grouped (lower = stricter)
-- **transition.type**: "hard_cut" for instant transitions, "fade_in_out" for smooth fades
-- **transition.fade_duration**: Length of fade transitions in seconds
-- **output.temp_dir**: Directory name for temporary segment files
-- **output.merged_dir**: Directory name for final merged videos
+- `scene_detection.method`: Select algorithm.
+- `min_scene_len` / `min_scene_len_seconds`: Minimum duration to avoid micro segments.
+- `grouping.similarity_threshold`: Lower = stricter (fewer, purer clusters).
+- `weight_hist` / `weight_hash`: Influence of components in combined distance.
+- `min_cluster_size`: Minimum cluster size to merge.
+- `skip_concat`: Perform clustering only (no merged outputs) for debugging.
 
-## How It Works
+### Grouping Mechanics
+1. 5 keyframes per segment (start/25%/50%/75%/end)
+2. HSV histograms (concatenated & averaged) + perceptual hash (pHash)
+3. Distance = w_hist * Bhattacharyya + w_hash * min(normalized Hamming)
+4. Union-Find clustering for all pairs below threshold
+5. FFmpeg concat (lossless) for clusters ≥ `min_cluster_size`
 
-1. **Download/Input**: Downloads YouTube video or uses local file
-2. **Scene Detection**: Analyzes video for scene changes using content detection
-3. **Segmentation**: Cuts video into individual scene segments
-4. **Analysis**: Extracts perceptual hashes from middle frames of each segment
-5. **Grouping**: Groups segments with similar visual content
-6. **Merging**: Combines segments within each group with chosen transition
-7. **Output**: Saves merged videos in organized directory structure
+## Pipeline
+
+1. Download / input normalization
+2. Scene detection (selected method)
+3. Segmentation (FFmpeg copy, no re-encode loss)
+4. Feature extraction (5 frames, hist + hash)
+5. Distance computation & clustering
+6. Merge per cluster (optional disable)
+7. Output structure write
 
 ## Output Structure
 
@@ -133,18 +171,20 @@ Artist - Song Name/
 
 ## Tips
 
-- For music videos with distinct sets/locations, lower the `similarity_threshold` for stricter grouping
-- Increase `scene_detection.threshold` if too many false scene cuts are detected
-- Use `fade_in_out` for smoother transitions between segments
-- Processing time depends on video length and number of scenes
+- Fewer, purer set videos: lower `similarity_threshold` (e.g. 0.40)
+- Too many tiny clusters: raise threshold (0.50) or set `min_cluster_size: 3`
+- Need more cuts: try `hash` or `histogram` methods
+- Debug without merge: `skip_concat: true` or use `--no-grouping`
+- Faster test runs: lower `hist_bins` to 16
 
 ## Troubleshooting
 
-- **Import errors**: Ensure all dependencies are installed with `pip install -r requirements.txt`
-- **FFmpeg not found**: Install FFmpeg and ensure it's in your system PATH
-- **No groups found**: Try lowering the `similarity_threshold` in config.yaml
-- **Too many groups**: Increase the `similarity_threshold`
+- No segments: adjust scene detection method/parameters
+- No clusters: increase `similarity_threshold` (e.g. 0.55)
+- Too many clusters: lower threshold (0.40) or increase histogram bins
+- FFmpeg errors: ensure `ffmpeg` is in PATH (`ffmpeg -version`)
+- Slow: reduce `hist_bins`, test shorter clips
 
 ## License
 
-This project is open source. Feel free to use and modify as needed.
+Open source – feel free to use & adapt (attribution appreciated).

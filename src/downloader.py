@@ -1,26 +1,8 @@
-"""
-YouTube Video Downloader
-
-Dedicated module for downloading videos from YouTube URLs.
-Returns video file paths and metadata for further processing.
-"""
-
 import os
 from yt_dlp import YoutubeDL
 
 
 def download_video(url, output_dir='.', format_selector=None):
-    """
-    Download video from YouTube URL into a subdirectory named after the video.
-    
-    Args:
-        url (str): YouTube URL to download
-        output_dir (str): Base directory to save the video (default: current directory)
-        format_selector (str): Format selector for yt-dlp (default: best mp4)
-        
-    Returns:
-        list: List of tuples (file_path, title) for downloaded videos
-    """
     if format_selector is None:
         format_selector = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
     
