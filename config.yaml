@@ -1,6 +1,6 @@
 scene_detection:
   method: hash                # adaptive | content | threshold_params | histogram | hash
-  min_scene_len: 6            # Alternative: Frames (nur falls Sekunden nicht gesetzt)
+  min_scene_len: 7            # Alternative: Frames (nur falls Sekunden nicht gesetzt)
 # min_scene_len_seconds: 1    # Mindestdauer einer Szene (Sek.)
 
   # Rolling-average adaptive content change (robust bei Kamerabewegung)
@@ -43,12 +43,17 @@ scene_detection:
 # HASH: 101 CUTS
 
 
+#Recommended settings:
+#simple_frames: 5
+#simple_resize: 48
+#simple_hash_weight: 0.2
+#simple_threshold: 0.800
 
 grouping:
-  simple_frames: 1              # Anzahl Frames: 1= nur Mitte, 3=Start/Mitte/Ende, 5/7/... gleichmäßig verteilt
-  simple_threshold: 0.88        # 0.88 # >= similarity -> gleiche Gruppe (0..1)
-  simple_hash_weight: 0.30      # Anteil pHash Similarity
-  simple_resize: 64             # Seitenlänge für Durchschnittsbild
+  simple_frames: 5              # Anzahl Frames: 1= nur Mitte, 3=Start/Mitte/Ende, 5/7/... gleichmäßig verteilt
+  simple_threshold: 0.800        # 0.88 # >= similarity -> gleiche Gruppe (0..1)
+  simple_hash_weight: 0.4      # 0.30 # Anteil pHash Similarity
+  simple_resize: 64             # 64 # Seitenlänge für Durchschnittsbild
   min_cluster_size: 2
   show_progress: true
   log_details: true

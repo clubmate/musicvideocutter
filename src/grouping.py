@@ -46,7 +46,7 @@ def group_scenes(temp_dir: str, merged_dir: str, cfg: Dict) -> List[List[str]]:
 
     files = [os.path.join(temp_dir, f) for f in sorted(os.listdir(temp_dir)) if f.lower().endswith(('.mp4', '.mkv', '.mov'))]
     if not files:
-        print('[grouping] No segments found.')
+        print('No segments found.')
         return []
 
     min_cluster = gcfg.get('min_cluster_size', 2)
@@ -57,7 +57,7 @@ def group_scenes(temp_dir: str, merged_dir: str, cfg: Dict) -> List[List[str]]:
     frame_count_cfg = int(gcfg.get('simple_frames', 3))  # 1 => nur Mitte, >=2 => gleichmäßig verteilt
 
     if log_details:
-        print(f"[grouping-simple] segments={len(files)} side={side} thr={threshold} hash_w={hash_weight}")
+        print(f"framecount={frame_count_cfg} segments={len(files)} side={side} thr={threshold} hash_w={hash_weight}")
 
     avg_vectors: List[np.ndarray] = []
     hashes: List[List[imagehash.ImageHash]] = []
