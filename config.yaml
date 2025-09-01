@@ -10,10 +10,11 @@ grouping:
   method: cnn                   # cnn | histogram | orb | sift | phash | audio (empfohlen: cnn)
   
   # Ähnlichkeitsbasierte Parameter
-  min_similarity: 0.75          # Mindest-Ähnlichkeit für Gruppierung (0-1)
+  min_similarity: 0.75          # 0.75 # Mindest-Ähnlichkeit für Gruppierung (0-1)
   min_group_size: 2             # Mindestanzahl Videos pro Gruppe
   orphan_threshold: 0         # Schwellwert für Einzelvideos (niedriger als min_similarity)
   similarity_metric: cosine     # cosine | euclidean | correlation (empfohlen: cosine)
+  group_expansion_mode: average  # strict | average (Gruppenerweiterungslogik)
 
 transition:
   type: hard_cut               # hard_cut (andere Optionen entfernt für Einfachheit)

@@ -278,18 +278,20 @@ class SimilarityGrouper:
     def group_by_similarity(self, video_paths: List[str], 
                           min_similarity: float = 0.75,
                           min_group_size: int = 2,
-                          orphan_threshold: float = 0.5) -> Dict[str, List[str]]:
+                          orphan_threshold: float = 0.5,
+                          group_expansion_mode: str = 'strict') -> Dict[str, List[str]]:
         """
-        Gruppiert Videos basierend auf Ähnlichkeit (Greedy-Algorithmus)
+        Groups videos based on similarity (Greedy algorithm)
         
         Args:
-            video_paths: Liste der Video-Dateipfade
-            min_similarity: Minimale Ähnlichkeit für Gruppierung (0.0 - 1.0)
-            min_group_size: Minimale Anzahl Videos pro Gruppe
-            orphan_threshold: Schwellwert für Waisen-Videos
+            video_paths: List of video file paths
+            min_similarity: Minimum similarity for grouping (0.0 - 1.0)
+            min_group_size: Minimum number of videos per group
+            orphan_threshold: Threshold for orphan videos
+            group_expansion_mode: 'strict' (all connections must meet threshold) or 'average' (average connection must meet threshold)
         
         Returns:
-            Dictionary mit Gruppen-IDs und zugehörigen Video-Listen
+            Dictionary with group IDs and associated video lists
         """
         if len(video_paths) < 2:
             return {}
@@ -300,6 +302,7 @@ class SimilarityGrouper:
         print(f"Min group size: {min_group_size}")
         print(f"Orphan threshold: {orphan_threshold}")
         print(f"Similarity metric: {self.similarity_metric}")
+        print(f"Group expansion mode: {group_expansion_mode}")
         
         # Features extrahieren
         features = []
@@ -366,7 +369,7 @@ class SimilarityGrouper:
             current_group = [i, j]
             used[i] = used[j] = True
             
-            # Erweitere Gruppe: Finde weitere Videos mit hoher Ähnlichkeit zu ALLEN Gruppen-Mitgliedern
+            # Erweitere Gruppe: Finde weitere Videos mit hoher Ähnlichkeit zu Gruppen-Mitgliedern
             improved = True
             while improved:
                 improved = False
@@ -382,8 +385,15 @@ class SimilarityGrouper:
                     avg_sim = np.mean(similarities_to_group)
                     min_sim = np.min(similarities_to_group)
                     
-                    # Strikte Bedingung: ALLE Verbindungen müssen >= min_similarity sein
-                    if min_sim >= min_similarity and avg_sim > best_avg_sim:
+                    # Verschiedene Bedingungen je nach Modus
+                    if group_expansion_mode == 'strict':
+                        # Strikte Bedingung: ALLE Verbindungen müssen >= min_similarity sein
+                        condition_met = min_sim >= min_similarity
+                    else:  # 'average' mode
+                        # Durchschnitts-Bedingung: Durchschnittliche Ähnlichkeit muss >= min_similarity sein
+                        condition_met = avg_sim >= min_similarity
+                    
+                    if condition_met and avg_sim > best_avg_sim:
                         best_candidate = k
                         best_avg_sim = avg_sim
                 
@@ -484,7 +494,8 @@ def group_videos_by_similarity(segments_dir: str,
                              min_similarity: float = 0.75,
                              min_group_size: int = 2,
                              orphan_threshold: float = 0.5,
-                             similarity_metric: str = 'cosine') -> Dict[str, str]:
+                             similarity_metric: str = 'cosine',
+                             group_expansion_mode: str = 'strict') -> Dict[str, str]:
     """
     Hauptfunktion für ähnlichkeitsbasierte Video-Gruppierung
     
@@ -522,7 +533,8 @@ def group_videos_by_similarity(segments_dir: str,
         video_files, 
         min_similarity=min_similarity,
         min_group_size=min_group_size,
-        orphan_threshold=orphan_threshold
+        orphan_threshold=orphan_threshold,
+        group_expansion_mode=group_expansion_mode
     )
     
     if not groups:

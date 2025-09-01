@@ -35,6 +35,9 @@ def main():
     parser.add_argument('--similarity-metric', default=None,
                        choices=['cosine', 'euclidean', 'correlation'],
                        help='Ähnlichkeitsmetrik (Standard: aus config.yaml)')
+    parser.add_argument('--group-expansion-mode', default=None,
+                       choices=['strict', 'average'],
+                       help='Gruppenerweiterungslogik (Standard: aus config.yaml)')
     
     args = parser.parse_args()
     input_path = args.input
@@ -87,6 +90,7 @@ def main():
             min_group_size = args.min_group_size or grouping_config.get('min_group_size', 2)
             orphan_threshold = args.orphan_threshold or grouping_config.get('orphan_threshold', 0.5)
             similarity_metric = args.similarity_metric or grouping_config.get('similarity_metric', 'cosine')
+            group_expansion_mode = args.group_expansion_mode or grouping_config.get('group_expansion_mode', 'strict')
             
             print(f"Similarity-based grouping:")
             print(f"  Method: {method}")
@@ -94,6 +98,7 @@ def main():
             print(f"  Min group size: {min_group_size}")
             print(f"  Orphan threshold: {orphan_threshold:.2f}")
             print(f"  Similarity metric: {similarity_metric}")
+            print(f"  Group expansion mode: {group_expansion_mode}")
             
             from src.grouping import group_videos_by_similarity
             
@@ -104,7 +109,8 @@ def main():
                     min_similarity=min_similarity,
                     min_group_size=min_group_size,
                     orphan_threshold=orphan_threshold,
-                    similarity_metric=similarity_metric
+                    similarity_metric=similarity_metric,
+                    group_expansion_mode=group_expansion_mode
                 )
                 print(f"Similarity-based grouping completed. {len(merged_files)} final videos created.")
                 for group_name, video_path in merged_files.items():
