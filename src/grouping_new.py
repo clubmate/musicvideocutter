@@ -40,21 +40,21 @@ class VideoSegmentAnalyzer:
         
         if method == 'cnn':
             if not TENSORFLOW_AVAILABLE:
-                print("TensorFlow not available. Fallback to histogram method.")
+                print("TensorFlow nicht verfügbar. Fallback auf Histogram-Methode.")
                 self.method = 'histogram'
             else:
-                # Load ResNet50 for CNN features
+                # ResNet50 für CNN-Features laden
                 try:
                     self.model = ResNet50(weights='imagenet', include_top=False, pooling='avg')
-                    print(f"CNN model loaded: ResNet50")
+                    print(f"CNN-Modell geladen: ResNet50")
                 except Exception as e:
-                    print(f"Error loading CNN model: {e}")
-                    print("Fallback to histogram method.")
+                    print(f"Fehler beim Laden des CNN-Modells: {e}")
+                    print("Fallback auf Histogram-Methode.")
                     self.method = 'histogram'
         
         elif method == 'audio':
             if not LIBROSA_AVAILABLE:
-                print("Librosa not available. Fallback to histogram method.")
+                print("Librosa nicht verfügbar. Fallback auf Histogram-Methode.")
                 self.method = 'histogram'
     
     def extract_features(self, video_path: str) -> np.ndarray:
@@ -183,7 +183,7 @@ class VideoSegmentAnalyzer:
             return features.astype(np.float32)
             
         except Exception as e:
-            print(f"Error in audio feature extraction: {e}")
+            print(f"Fehler bei Audio-Feature-Extraktion: {e}")
             return self._extract_histogram_features(video_path)
 
 
@@ -218,9 +218,9 @@ def merge_video_groups(groups: Dict[str, List[str]], output_dir: str, group_pref
                     '-c', 'copy', output_path
                 ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 merged_files[group_id] = output_path
-                print(f"Group {group_id}: 1 video -> {os.path.basename(output_path)}")
+                print(f"Gruppe {group_id}: 1 Video -> {os.path.basename(output_path)}")
             except subprocess.CalledProcessError as e:
-                print(f"Error copying {group_id}: {e}")
+                print(f"Fehler beim Kopieren von {group_id}: {e}")
         else:
             # Mehrere Videos zusammenfügen
             try:
@@ -241,24 +241,24 @@ def merge_video_groups(groups: Dict[str, List[str]], output_dir: str, group_pref
                 ], capture_output=True, text=True)
                 
                 if result.returncode != 0:
-                    print(f"FFmpeg error for {group_id}:")
+                    print(f"FFmpeg Fehler bei {group_id}:")
                     print(f"Stdout: {result.stdout}")
                     print(f"Stderr: {result.stderr}")
-                    # Show filelist content for debugging
+                    # Filelist-Inhalt zur Debugging anzeigen
                     with open(filelist_path, 'r', encoding='utf-8') as f:
-                        print(f"Filelist content:\n{f.read()}")
+                        print(f"Filelist Inhalt:\n{f.read()}")
                     raise subprocess.CalledProcessError(result.returncode, result.args)
                 
-                # Delete temporary file
+                # Temporäre Datei löschen
                 os.remove(filelist_path)
                 
                 merged_files[group_id] = output_path
-                print(f"Group {group_id}: {len(video_list)} videos -> {os.path.basename(output_path)}")
+                print(f"Gruppe {group_id}: {len(video_list)} Videos -> {os.path.basename(output_path)}")
                 
             except subprocess.CalledProcessError as e:
-                print(f"Error merging {group_id}: {e}")
+                print(f"Fehler beim Zusammenfügen von {group_id}: {e}")
             except Exception as e:
-                print(f"Unexpected error for {group_id}: {e}")
+                print(f"Unerwarteter Fehler bei {group_id}: {e}")
     
     return merged_files
 
@@ -294,12 +294,12 @@ class SimilarityGrouper:
         if len(video_paths) < 2:
             return {}
         
-        print(f"Found: {len(video_paths)} video segments")
-        print(f"Method: {self.analyzer.method}")
-        print(f"Min similarity: {min_similarity}")
-        print(f"Min group size: {min_group_size}")
-        print(f"Orphan threshold: {orphan_threshold}")
-        print(f"Similarity metric: {self.similarity_metric}")
+        print(f"📁 Gefunden: {len(video_paths)} Video-Segmente")
+        print(f"🔧 Methode: {self.analyzer.method}")
+        print(f"🎯 Min-Ähnlichkeit: {min_similarity}")
+        print(f"👥 Min-Gruppengröße: {min_group_size}")
+        print(f"🏠 Waisen-Schwellwert: {orphan_threshold}")
+        print(f"📏 Ähnlichkeitsmetrik: {self.similarity_metric}")
         
         # Features extrahieren
         features = []
@@ -313,16 +313,16 @@ class SimilarityGrouper:
                     valid_paths.append(video_path)
                     
                     if (i + 1) % 10 == 0:
-                        print(f"Features extracted: {i + 1}/{len(video_paths)}")
+                        print(f"Features extrahiert: {i + 1}/{len(video_paths)}")
                         
             except Exception as e:
-                print(f"Error with {video_path}: {e}")
+                print(f"Fehler bei {video_path}: {e}")
         
         if len(features) < 2:
-            print("Not enough valid features extracted")
+            print("❌ Nicht genügend gültige Features extrahiert")
             return {}
         
-        print(f"Calculating similarity matrix...")
+        print(f"📊 Berechne Ähnlichkeitsmatrix...")
         
         # Ähnlichkeitsmatrix berechnen
         features_array = np.array(features)
@@ -338,15 +338,15 @@ class SimilarityGrouper:
             # Fallback auf Cosine
             similarity_matrix = cosine_similarity(features_array)
         
-        # Greedy clustering with strict quality control
-        print(f"Searching for groups with min. {min_similarity} similarity...")
+        # Greedy Clustering mit strikter Qualitätskontrolle
+        print(f"🔗 Suche Gruppen mit min. {min_similarity} Ähnlichkeit...")
         
         n_videos = len(valid_paths)
         used = [False] * n_videos
         groups = {}
         group_counter = 0
         
-        # Collect all valid connections
+        # Sammle alle gültigen Verbindungen
         valid_connections = []
         for i in range(n_videos):
             for j in range(i + 1, n_videos):
@@ -354,8 +354,8 @@ class SimilarityGrouper:
                 if sim >= min_similarity:
                     valid_connections.append((i, j, sim))
         
-        valid_connections.sort(key=lambda x: x[2], reverse=True)  # Sort by similarity
-        print(f"Found: {len(valid_connections)} qualifying similarity connections")
+        valid_connections.sort(key=lambda x: x[2], reverse=True)  # Nach Ähnlichkeit sortieren
+        print(f"📊 Gefunden: {len(valid_connections)} qualifizierende Ähnlichkeitsverbindungen")
         
         # Greedy-Gruppierung: Beginne mit bester Verbindung
         for i, j, sim in valid_connections:
@@ -409,8 +409,8 @@ class SimilarityGrouper:
                 group_id = f"group_{group_counter:03d}_sim{avg_similarity:.3f}"
                 groups[group_id] = group_paths
                 
-                print(f"  Group found: {len(group_paths)} videos, avg similarity: {avg_similarity:.3f}")
-                print(f"    Similarity range: {min_similarity_in_group:.3f} - {max_similarity_in_group:.3f}")
+                print(f"  ✅ Gruppe gefunden: {len(group_paths)} Videos, Ø Ähnlichkeit: {avg_similarity:.3f}")
+                print(f"    📊 Ähnlichkeitsbereich: {min_similarity_in_group:.3f} - {max_similarity_in_group:.3f}")
                 
                 group_counter += 1
         
@@ -433,7 +433,7 @@ class SimilarityGrouper:
             orphan_group_id = f"group_{group_counter:03d}_orphans"
             groups[orphan_group_id] = orphan_paths
             
-            print(f"{len(orphan_paths)} orphan videos found, avg similarity: {avg_orphan_sim:.3f}")
+            print(f"🏠 {len(orphan_paths)} Waisen-Videos gefunden, Ø Ähnlichkeit: {avg_orphan_sim:.3f}")
         
         # Statistiken speichern
         self.group_stats = []
@@ -465,12 +465,12 @@ class SimilarityGrouper:
         # Sortiere nach Qualität
         self.group_stats.sort(key=lambda x: x['quality'], reverse=True)
         
-        print("\\nGrouping completed:")
+        print("\\n📊 Gruppierung abgeschlossen:")
         for i, stats in enumerate(self.group_stats, 1):
             if stats['type'] == 'orphans':
-                print(f"  Rank {i}: {stats['group_id']} - {stats['size']} videos, Quality: {stats['quality']:.3f} (Individual videos)")
+                print(f"  Rang {i}: {stats['group_id']} - {stats['size']} Videos, Qualität: {stats['quality']:.3f} (Einzelvideos)")
             else:
-                print(f"  Rank {i}: {stats['group_id']} - {stats['size']} videos, Quality: {stats['quality']:.3f}")
+                print(f"  Rang {i}: {stats['group_id']} - {stats['size']} Videos, Qualität: {stats['quality']:.3f}")
         
         return groups
     
@@ -506,7 +506,7 @@ def group_videos_by_similarity(segments_dir: str,
             video_files.append(os.path.join(segments_dir, file))
     
     if len(video_files) < 2:
-        print(f"Not enough video segments found in {segments_dir}")
+        print(f"❌ Nicht genügend Video-Segmente gefunden in {segments_dir}")
         return {}
     
     # Ausgabeverzeichnis erstellen
@@ -526,46 +526,31 @@ def group_videos_by_similarity(segments_dir: str,
     )
     
     if not groups:
-        print("No groups found")
+        print("❌ Keine Gruppen gefunden")
         return {}
     
-    # Merge videos
-    print(f"\\nMerging {len(groups)} groups...")
+    # Videos zusammenfügen
+    print(f"\\n🔗 Füge {len(groups)} Gruppen zusammen...")
     merged_files = merge_video_groups(groups, output_dir, group_prefix="similarity")
     
     # Detaillierte Info speichern
     group_stats = grouper.get_group_statistics()
-    
-    # Konvertiere numpy float32 zu Python float für JSON-Kompatibilität
-    def convert_to_json_safe(obj):
-        if isinstance(obj, np.float32):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, dict):
-            return {k: convert_to_json_safe(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [convert_to_json_safe(item) for item in obj]
-        return obj
-    
-    group_stats_safe = convert_to_json_safe(group_stats)
-    
     groups_info = {
         'method': method,
         'grouping_type': 'similarity_based',
-        'min_similarity': float(min_similarity),
-        'min_group_size': int(min_group_size),
-        'orphan_threshold': float(orphan_threshold),
+        'min_similarity': min_similarity,
+        'min_group_size': min_group_size,
+        'orphan_threshold': orphan_threshold,
         'similarity_metric': similarity_metric,
         'groups': {k: [os.path.basename(v) for v in videos] for k, videos in groups.items()},
         'merged_files': {k: os.path.basename(v) for k, v in merged_files.items()},
-        'group_statistics': group_stats_safe
+        'group_statistics': group_stats
     }
     
     info_path = os.path.join(output_dir, 'similarity_grouping_info.json')
     with open(info_path, 'w', encoding='utf-8') as f:
         json.dump(groups_info, f, indent=2, ensure_ascii=False)
     
-    print(f"Detailed information saved: {info_path}")
+    print(f"💾 Detaillierte Informationen gespeichert: {info_path}")
     
     return merged_files

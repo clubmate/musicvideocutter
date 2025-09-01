@@ -1,7 +1,18 @@
-yt-dlp
-scenedetect
-moviepy
-pyyaml
-tqdm
-opencv-python
-numpy
+# Core dependencies (required)
+yt-dlp                # YouTube/Video download
+scenedetect          # Video scene detection and splitting  
+pyyaml               # Configuration file parsing
+opencv-python        # Computer vision and video processing
+numpy                # Numerical computing
+scikit-learn         # Machine learning utilities (similarity metrics)
+tqdm                 # Progress bars
+
+# Optional dependencies for advanced grouping features:
+tensorflow>=2.0      # CNN-based similarity (best quality, requires ~2GB disk space)
+librosa              # Audio-based similarity analysis
+pillow               # Advanced image processing (PIL)
+imagehash            # Perceptual image hashing
+
+# Removed packages (no longer used):
+# moviepy            # Replaced by direct ffmpeg usage
+# matplotlib         # No plotting features used

@@ -2,9 +2,9 @@ scene_detection:
   method: adaptive                # adaptive | content | threshold_params | histogram | hash
   min_scene_len: 7               # Mindestlänge einer Szene in Sekunden
 
-# Ähnlichkeitsbasierte Gruppierung (standardmäßig aktiviert)
+# Ähnlichkeitsbasierte Gruppierung (einzige verfügbare Methode)
 grouping:
-  enabled: true                 # Automatische Gruppierung standardmäßig aktiviert
+  enabled: false                # Automatische Gruppierung aktivieren
   
   # Feature-Extraktions-Methode
   method: cnn                   # cnn | histogram | orb | sift | phash | audio (empfohlen: cnn)
@@ -12,7 +12,7 @@ grouping:
   # Ähnlichkeitsbasierte Parameter
   min_similarity: 0.75          # Mindest-Ähnlichkeit für Gruppierung (0-1)
   min_group_size: 2             # Mindestanzahl Videos pro Gruppe
-  orphan_threshold: 0         # Schwellwert für Einzelvideos (niedriger als min_similarity)
+  orphan_threshold: 0.5         # Schwellwert für Einzelvideos (niedriger als min_similarity)
   similarity_metric: cosine     # cosine | euclidean | correlation (empfohlen: cosine)
 
 transition:

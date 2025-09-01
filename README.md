@@ -1,139 +1,185 @@
-# Music Video Cutter
+# Music Video Cutter - Simplified Version
 
-Ein vereinfachtes Tool: lädt ein Musikvideo herunter (oder nutzt lokale Datei) und schneidet es automatisch in Szenen. Die frühere Funktion zum Gruppieren/Mergen ähnlicher Szenen wurde entfernt.
+## Overview
 
-## Beschreibung
+The Music Video Cutter tool detects and cuts scenes from music videos and groups similar scenes based on **actual visual similarity**. 
 
-Erkennt Schnitte (mehrere Verfahren) und exportiert jede Szene als eigenes Segment (verlustfrei per FFmpeg Copy). Kein Clustering/Merging mehr – Fokus liegt auf zuverlässiger Schnitt-Erkennung.
-
-## Features
-
-- YouTube Videos & Playlists oder lokale Dateien
-- Mehrere Schnitt-Detektionsmethoden: adaptive | content | threshold_params | histogram | hash
-- Verlustfreier Segment-Export via FFmpeg Stream Copy
-- Fortschrittsanzeigen (tqdm)
-- Konfigurierbar über `config.yaml`
+**Simplified**: All old clustering methods have been removed - only the optimal similarity-based grouping is available.
 
 ## Installation
 
-1. Clone or download this repository
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+# Clone the repository
+git clone <repo-url>
+cd musicvideocutter
 
-### Requirements
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 
-- Python 3.7+
-- FFmpeg (for video processing)
-- Benötigte Python Pakete: siehe `requirements.txt` (yt-dlp, scenedetect, moviepy, pyyaml, tqdm, opencv-python, numpy)
+# Install dependencies
+pip install -r requirements.txt
+```
 
 ## Usage
 
-Standard:
+### Basic Usage
 ```bash
-python musicvideocutter.py "https://www.youtube.com/watch?v=VIDEO_ID"
+# Scene detection and cutting only
+python musicvideocutter.py "path/to/video.mp4" --no-group
+
+# With YouTube URL
+python musicvideocutter.py "https://www.youtube.com/watch?v=VIDEO_ID" --no-group
+
+# Default behavior (with grouping)
+python musicvideocutter.py "path/to/video.mp4"
 ```
 
-Local file:
+### With Similarity Grouping (Default)
 ```bash
-python musicvideocutter.py "my_video.mp4"
+# Standard grouping (recommended)
+python musicvideocutter.py "path/to/video.mp4"
+
+# With custom similarity threshold
+python musicvideocutter.py "path/to/video.mp4" --min-similarity 0.8
+
+# All available parameters
+python musicvideocutter.py "path/to/video.mp4" \
+    --group-method cnn \
+    --min-similarity 0.75 \
+    --min-group-size 2 \
+    --orphan-threshold 0.5 \
+    --similarity-metric cosine
 ```
 
-Grouping-Optionen wurden entfernt – jeder erkannte Schnitt wird als Datei geschrieben.
+## Parameters
 
-### Examples
+### Similarity-Based Grouping
 
-YouTube video:
-```bash
-python musicvideocutter.py "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-```
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--group-method` | `cnn` | Feature extraction method (`histogram`, `cnn`, `audio`) |
+| `--min-similarity` | `0.75` | Minimum similarity for grouping (0-1) |
+| `--min-group-size` | `2` | Minimum number of videos per group |
+| `--orphan-threshold` | `0.5` | Threshold for orphan videos |
+| `--similarity-metric` | `cosine` | Similarity metric (`cosine`, `euclidean`) |
+| `--no-group` | `false` | Skip grouping (scene detection only) |
 
-YouTube playlist:
-```bash
-python musicvideocutter.py "https://www.youtube.com/playlist?list=PLAYLIST_ID"
-```
-
-
-## Konfiguration
-
-`config.yaml` (Ausschnitt):
+## Configuration (config.yaml)
 
 ```yaml
 scene_detection:
-  method: adaptive           # adaptive | content | threshold_params | histogram | hash
-  min_scene_len: 6           # Minimum scene length (frames) if seconds not used
-  # min_scene_len_seconds: 1 # Alternative in seconds
-  adaptive:
-    adaptive_threshold: 3.0
-    window_width: 2
-    min_content_val: 15.0
-  content:
-    threshold: 27.0
-    luma_only: false
-  threshold_params:
-    threshold: 12
-    fade_bias: 0.0
-    add_final_scene: false
-  histogram:
-    threshold: 0.05
-    bins: 256
-  hash:
-    threshold: 0.395
-    size: 16
-    lowpass: 2
+  method: adaptive                # Scene detection method
+  min_scene_len: 7               # Minimum scene length in seconds
 
-
-transition:
-  type: hard_cut       # placeholder for future transitions
-  fade_duration: 1.0
+grouping:
+  enabled: true                 # Enable automatic grouping
+  method: cnn                   # Feature extraction method (recommended: cnn)
+  min_similarity: 0.75          # Minimum similarity for grouping (0-1)
+  min_group_size: 2             # Minimum number of videos per group
+  orphan_threshold: 0.5         # Threshold for orphan videos
+  similarity_metric: cosine     # Similarity metric (recommended: cosine)
 
 output:
-  download_dir: output
-  temp_dir: temp_segments
-  merged_dir: merged_videos
+  download_dir: output          # Base directory for downloads
+  temp_dir: temp_segments       # Target folder for cut scenes
+  merged_dir: merged_videos     # Output folder for grouped videos
 ```
 
-### Wichtige Optionen
-- `scene_detection.method`
-- `min_scene_len` oder `min_scene_len_seconds`
+## How Similarity Grouping Works
 
-### Methoden Kurzinfo
-- adaptive: adaptiver Content-Wert (robust gegen Bewegung)
-- content: fester Farbänderungs-Schwellenwert
-- threshold_params: Fade / Helligkeits-basiert
-- histogram: Y-Kanal Histogrammdifferenz
-- hash: Perceptual Hash Unterschiede
+### 1. Feature Extraction
+- **CNN (recommended)**: Deep learning features with ResNet50
+- **Histogram**: Color histograms
+- **Audio**: Audio features (requires librosa)
 
-## Pipeline
+### 2. Similarity Calculation
+- **Cosine (recommended)**: Cosine similarity between feature vectors
+- **Euclidean**: Euclidean distance
 
-1. Download / Input Normalisierung
-2. Szenen-Detektion (gewählte Methode)
-3. Segment-Export (FFmpeg Copy) in `temp_segments/`
-4. Fertig
+### 3. Grouping Algorithm
+1. **Find qualifying pairs**: Only video pairs with similarity >= `min_similarity`
+2. **Greedy expansion**: Start with best pair, expand only if **all** connections qualify
+3. **No transitive inference**: A-B (0.8) + B-C (0.8) leads to A-B-C only if A-C >= 0.75
+4. **Quality sorting**: Groups sorted by average similarity
+5. **Orphan group**: Videos without sufficient similarities
 
-## Output Struktur
+### 4. Output
+- **Quality-sorted groups**: `group_000_sim0.891`, `group_001_sim0.838`, etc.
+- **Orphan group**: `group_XXX_orphans` for videos with low similarities
+- **Detailed statistics**: JSON file with all metadata
+
+## Example Results
+
+For test video "Haiyti - Sweet" (57 segments) with `--min-similarity 0.75`:
+
 ```
-VideoTitel/
-└── temp_segments/
-  ├── segment_000.mp4
-  ├── segment_001.mp4
-  └── ...
+Grouping completed:
+  Rank 1: group_000_sim0.891 - 5 videos, Quality: 0.891
+  Rank 2: group_001_sim0.838 - 8 videos, Quality: 0.838
+  Rank 3: group_002_sim0.838 - 6 videos, Quality: 0.838
+  ...
+  Rank 14: group_013_orphans - 10 videos, Quality: 0.738 (Individual videos)
 ```
-`temp_segments/` enthält alle erkannten Szenen.
 
-## Tipps
+**Result**: 14 final videos - very similar scenes are combined, different ones remain separate.
 
-- Mehr Schnitte: `scene_detection.method` auf `hash` oder `histogram` testen
-- Weniger Rauschen: `adaptive` oder `content` Parameter feinjustieren
-- Mindestlänge: `min_scene_len` oder `min_scene_len_seconds` setzen
+## Recommended Settings
+
+### For Music Videos (Default)
+```bash
+python musicvideocutter.py "video.mp4"
+```
+
+### For Stricter Grouping
+```bash
+python musicvideocutter.py "video.mp4" --min-similarity 0.85 --min-group-size 3
+```
+
+### For Looser Grouping
+```bash
+python musicvideocutter.py "video.mp4" --min-similarity 0.65 --orphan-threshold 0.4
+```
 
 ## Troubleshooting
 
-- No segments: adjust scene detection method/parameters
-- FFmpeg Fehler: `ffmpeg -version` testen / PATH prüfen
-- Performance: Kürzere Testclips, andere Methode wählen
+### TensorFlow not available
+```bash
+pip install tensorflow
+```
 
-## License
+### Librosa not available (for audio features)
+```bash
+pip install librosa
+```
 
-Open source – frei nutzbar & anpassbar.
+### Fallback for problems
+```bash
+# Use simpler histogram method
+python musicvideocutter.py "video.mp4" --group-method histogram
+```
+
+## Technical Details
+
+- **No cluster count**: System automatically determines optimal number of groups
+- **Quality-based**: Groups are only created if similarity is sufficiently high
+- **Robust grouping**: No "weak" groups through transitive connections
+- **Scalable**: Works with 2-200+ video segments
+
+## File Structure
+
+```
+output/
+  video_name/
+    video_name.mp4              # Original video
+    temp_segments/              # Individual scene segments
+      Scene-001.mp4
+      Scene-002.mp4
+      ...
+    merged_videos/              # Grouped final videos
+      similarity_group_000_sim0.891.mp4
+      similarity_group_001_sim0.838.mp4
+      ...
+      similarity_grouping_info.json  # Detailed metadata
+```
