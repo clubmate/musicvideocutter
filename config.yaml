@@ -1,64 +1,7 @@
 scene_detection:
-  method: hash                # adaptive | content | threshold_params | histogram | hash
+  method: adaptive                # adaptive | content | threshold_params | histogram | hash
   min_scene_len: 7            # Alternative: Frames (nur falls Sekunden nicht gesetzt)
 # min_scene_len_seconds: 1    # Mindestdauer einer Szene (Sek.)
-
-  # Rolling-average adaptive content change (robust bei Kamerabewegung)
-  adaptive:
-    adaptive_threshold: 3.0   # 3.0 / Ratio-Schwelle (niedriger = sensibler)
-    window_width: 2           # Fensterbreite für gleitenden Durchschnitt
-    min_content_val: 15.0     # Mindest-Content-Wert (Filter gegen Rauschen)
-
-  # Feste Schwelle auf HSV-Änderung (klassische harte Schnitte)
-  content:
-    threshold: 27.0           # 27.0 / Pixeländerungs-Schwelle (niedriger = mehr Schnitte)
-    luma_only: false          # true = nur Helligkeit (stabiler, weniger Schnitte)
-
-  # Helligkeits-basierte Fades (fade in/out, dunkle Übergänge)
-  threshold_params:
-    threshold: 12             # 12 / Helligkeitsgrenze (0-255) für Fades
-    fade_bias: 0.0            # -1..+1 verschiebt Schnittposition innerhalb des Fades
-    add_final_scene: false    # true = fügt Szene am Videoende hinzu falls Fade-Out
-
-  # Y-Kanal Histogramm-Differenz (stabil bei Farb-/Lichtwechseln)
-  histogram:
-    threshold: 0.05           # 0.05 /0..1 relative Differenz (kleiner = sensibler)
-    bins: 256                 # Histogramm-Bins (höher = genauer, langsamer)
-
-  # Perceptual Hash Differenzen (robust gegen kleine Pixeländerungen, aber langsamer)
-  hash:
-    threshold: 0.395          # 0.395 / 0..1 Hamming-Distanz / (size*size) (kleiner = sensibler)
-    size: 16                  # DCT Low-Frequency-Größe
-    lowpass: 2                # 2 behält 1/2, 4 behält 1/4 der Frequenzen
-
-
-# TESTS
-# HAIYITI - SWEET
-
-# DEFAULT
-# ADAPTIVE: 57 CUTS
-# CONTENT: 76 CUTS
-# THRESHOLD: 57 CUTS
-# HISTOGRAM: 79 CUTS
-# HASH: 101 CUTS
-
-
-#Recommended settings:
-#simple_frames: 5
-#simple_resize: 48
-#simple_hash_weight: 0.2
-#simple_threshold: 0.800
-
-grouping:
-  simple_frames: 5              # Anzahl Frames: 1= nur Mitte, 3=Start/Mitte/Ende, 5/7/... gleichmäßig verteilt
-  simple_threshold: 0.800        # 0.88 # >= similarity -> gleiche Gruppe (0..1)
-  simple_hash_weight: 0.4      # 0.30 # Anteil pHash Similarity
-  simple_resize: 64             # 64 # Seitenlänge für Durchschnittsbild
-  min_cluster_size: 2
-  show_progress: true
-  log_details: true
-  skip_concat: false
-
 
 transition:
   type: hard_cut       # (Deaktiviert) hard_cut | fade_in_out

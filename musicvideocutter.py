@@ -1,9 +1,8 @@
 import os
 import argparse
 import yaml
-import scenedetect  # kept if other features later; not strictly needed here
+import scenedetect  # kept for detector creation
 from src.scene_detection import detect_and_split
-from src.grouping import group_scenes
 from src.downloader import download_video
 
 def load_config():
@@ -17,9 +16,8 @@ def main():
     config = load_config()
     # (logging removed per request)
 
-    parser = argparse.ArgumentParser(description="Cut and merge music video segments by sets.")
-    parser.add_argument('input', help='YouTube URL or local file path')
-    parser.add_argument('--no-grouping', action='store_true', help='Disable grouping of similar scenes (enabled by default)')
+    parser = argparse.ArgumentParser(description="Detect and cut scenes from music videos.")
+    parser.add_argument('input', help='YouTube URL oder lokaler Dateipfad')
     args = parser.parse_args()
     input_path = args.input
 
@@ -60,12 +58,7 @@ def main():
         print(f"Processing {title} (Detection Method: {config['scene_detection']['method']})")
         scenes = detect_and_split(video_path, temp_dir, config)
         print(f"Detected and split video into {len(scenes)} segments")
-        if not args.no_grouping:
-            print('Grouping similar scenes... (use --no-grouping to skip)')
-            clusters = group_scenes(temp_dir, merged_dir, config)
-            kept = [c for c in clusters if len(c) >= config.get('grouping', {}).get('min_cluster_size', 2)]
-            print(f'Created {len(kept)} merged cluster videos (total clusters including singletons: {len(clusters)})')
-        print(f"Done processing {title}")
+    print(f"Done processing {title}")
 
 if __name__ == "__main__":
     main()

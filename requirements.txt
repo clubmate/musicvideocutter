@@ -4,6 +4,4 @@ moviepy
 pyyaml
 tqdm
 opencv-python
-imagehash
-Pillow
 numpy
