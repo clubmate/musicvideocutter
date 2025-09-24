@@ -232,7 +232,7 @@ def merge_video_groups(groups: Dict[str, List[str]], output_dir: str, group_pref
                         abs_path = os.path.abspath(video_path)
                         # Backslashes durch Forward-Slashes ersetzen für ffmpeg
                         ffmpeg_path = abs_path.replace('\\', '/')
-                        f.write(f"file '{ffmpeg_path}'\n")
+                        f.write(f'file "{ffmpeg_path}"\n')
                 
                 # Videos mit ffmpeg concatenaten - mit Fehlerausgabe für Debugging
                 result = subprocess.run([

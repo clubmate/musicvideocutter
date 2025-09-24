@@ -5,7 +5,7 @@ from yt_dlp import YoutubeDL
 def sanitize_filename(name):
     """Sanitize filename to be valid on Windows."""
     # Replace invalid characters with underscores
-    invalid_chars = '<>:"|?*\\'
+    invalid_chars = '<>:"|?*\\\''
     for char in invalid_chars:
         name = name.replace(char, '_')
     # Also replace forward slash
