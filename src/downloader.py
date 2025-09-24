@@ -3,13 +3,12 @@ from yt_dlp import YoutubeDL
 
 
 def sanitize_filename(name):
-    """Sanitize filename to be valid on Windows."""
-    # Replace invalid characters with underscores
-    invalid_chars = '<>:"|?*\\\''
-    for char in invalid_chars:
-        name = name.replace(char, '_')
-    # Also replace forward slash
-    name = name.replace('/', '_')
+    """Sanitize filename by removing all special characters."""
+    import re
+    # Remove all characters that are not letters, numbers, spaces, hyphens, or underscores
+    name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', name)
+    # Replace multiple spaces with single space
+    name = re.sub(r'\s+', ' ', name)
     # Remove leading/trailing spaces and dots
     name = name.strip(' .')
     return name
