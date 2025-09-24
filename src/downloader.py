@@ -2,6 +2,19 @@ import os
 from yt_dlp import YoutubeDL
 
 
+def sanitize_filename(name):
+    """Sanitize filename to be valid on Windows."""
+    # Replace invalid characters with underscores
+    invalid_chars = '<>:"|?*\\'
+    for char in invalid_chars:
+        name = name.replace(char, '_')
+    # Also replace forward slash
+    name = name.replace('/', '_')
+    # Remove leading/trailing spaces and dots
+    name = name.strip(' .')
+    return name
+
+
 def download_video(url, output_dir='.', format_selector=None):
     if format_selector is None:
         format_selector = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
@@ -22,7 +35,7 @@ def download_video(url, output_dir='.', format_selector=None):
     
     if 'entries' in info:
         # Playlist - create subdirectory for playlist
-        playlist_title = info.get('title', 'Playlist').replace('/', '_').replace('\\', '_').replace(':', '_')
+        playlist_title = sanitize_filename(info.get('title', 'Playlist'))
         video_output_dir = os.path.join(output_dir, playlist_title)
         os.makedirs(video_output_dir, exist_ok=True)
         
@@ -39,7 +52,7 @@ def download_video(url, output_dir='.', format_selector=None):
                 downloaded_videos.append((filename, entry['title']))
     else:
         # Single video - create subdirectory named after video
-        video_title = info.get('title', 'Video').replace('/', '_').replace('\\', '_').replace(':', '_')
+        video_title = sanitize_filename(info.get('title', 'Video'))
         video_output_dir = os.path.join(output_dir, video_title)
         os.makedirs(video_output_dir, exist_ok=True)
         
